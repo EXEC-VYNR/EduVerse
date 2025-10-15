@@ -1,0 +1,558 @@
+```
+// File: index.html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EduVerse - Learn Free</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/web3@1.7.0/dist/web3.min.js"></script>
+    <script src="https://unpkg.com/ipfs-http-client@59.0.0/dist/index.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css">
+    <link rel="manifest" href="/manifest.json">
+</head>
+<body>
+    <div id="root"></div>
+    <script src="App.js"></script>
+    <script src="serviceWorker.js"></script>
+</body>
+</html>
+
+// File: App.js
+import React, { useState, useEffect } from 'react';
+import { create } from 'ipfs-http-client';
+import Web3 from 'web3';
+
+const ipfs = create({ host: 'ipfs.infura.io', port: 5001, protocol: 'https' });
+const web3 = new Web3(Web3.givenProvider || 'https://sepolia.infura.io/v3/YOUR_INFURA_KEY');
+const contractABI = [
+    {
+        "inputs": [],
+        "stateMutability": "nonpayable",
+        "type": "constructor"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": true,
+                "internalType": "address",
+                "name": "owner",
+                "type": "address"
+            },
+            {
+                "indexed": true,
+                "internalType": "address",
+                "name": "approved",
+                "type": "address"
+            },
+            {
+                "indexed": true,
+                "internalType": "uint256",
+                "name": "tokenId",
+                "type": "uint256"
+            }
+        ],
+        "name": "Approval",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": true,
+                "internalType": "address",
+                "name": "owner",
+                "type": "address"
+            },
+            {
+                "indexed": true,
+                "internalType": "address",
+                "name": "operator",
+                "type": "address"
+            },
+            {
+                "indexed": false,
+                "internalType": "bool",
+                "name": "approved",
+                "type": "bool"
+            }
+        ],
+        "name": "ApprovalForAll",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": true,
+                "internalType": "address",
+                "name": "from",
+                "type": "address"
+            },
+            {
+                "indexed": true,
+                "internalType": "address",
+                "name": "to",
+                "type": "address"
+            },
+            {
+                "indexed": true,
+                "internalType": "uint256",
+                "name": "tokenId",
+                "type": "uint256"
+            }
+        ],
+        "name": "Transfer",
+        "type": "event"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "to",
+                "type": "address"
+            },
+            {
+                "internalType": "uint256",
+                "name": "tokenId",
+                "type": "uint256"
+            }
+        ],
+        "name": "approve",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "owner",
+                "type": "address"
+            }
+        ],
+        "name": "balanceOf",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "tokenId",
+                "type": "uint256"
+            }
+        ],
+        "name": "getApproved",
+        "outputs": [
+            {
+                "internalType": "address",
+                "name": "",
+                "type": "address"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "owner",
+                "type": "address"
+            },
+            {
+                "internalType": "address",
+                "name": "operator",
+                "type": "address"
+            }
+        ],
+        "name": "isApprovedForAll",
+        "outputs": [
+            {
+                "internalType": "bool",
+                "name": "",
+                "type": "bool"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "recipient",
+                "type": "address"
+            },
+            {
+                "internalType": "uint256",
+                "name": "courseId",
+                "type": "uint256"
+            }
+        ],
+        "name": "mintBadge",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "name",
+        "outputs": [
+            {
+                "internalType": "string",
+                "name": "",
+                "type": "string"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "tokenId",
+                "type": "uint256"
+            }
+        ],
+        "name": "ownerOf",
+        "outputs": [
+            {
+                "internalType": "address",
+                "name": "",
+                "type": "address"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "from",
+                "type": "address"
+            },
+            {
+                "internalType": "address",
+                "name": "to",
+                "type": "address"
+            },
+            {
+                "internalType": "uint256",
+                "name": "tokenId",
+                "type": "uint256"
+            }
+        ],
+        "name": "safeTransferFrom",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "from",
+                "type": "address"
+            },
+            {
+                "internalType": "address",
+                "name": "to",
+                "type": "address"
+            },
+            {
+                "internalType": "uint256",
+                "name": "tokenId",
+                "type": "uint256"
+            },
+            {
+                "internalType": "bytes",
+                "name": "_data",
+                "type": "bytes"
+            }
+        ],
+        "name": "safeTransferFrom",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "operator",
+                "type": "address"
+            },
+            {
+                "internalType": "bool",
+                "name": "approved",
+                "type": "bool"
+            }
+        ],
+        "name": "setApprovalForAll",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "bytes4",
+                "name": "interfaceId",
+                "type": "bytes4"
+            }
+        ],
+        "name": "supportsInterface",
+        "outputs": [
+            {
+                "internalType": "bool",
+                "name": "",
+                "type": "bool"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "symbol",
+        "outputs": [
+            {
+                "internalType": "string",
+                "name": "",
+                "type": "string"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "tokenId",
+                "type": "uint256"
+            }
+        ],
+        "name": "tokenURI",
+        "outputs": [
+            {
+                "internalType": "string",
+                "name": "",
+                "type": "string"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "from",
+                "type": "address"
+            },
+            {
+                "internalType": "address",
+                "name": "to",
+                "type": "address"
+            },
+            {
+                "internalType": "uint256",
+                "name": "tokenId",
+                "type": "uint256"
+            }
+        ],
+        "name": "transferFrom",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    }
+];
+const contract = new web3.eth.Contract(contractABI, 'YOUR_CONTRACT_ADDRESS');
+
+const App = () => {
+    const [courses, setCourses] = useState([]);
+    const [account, setAccount] = useState('');
+
+    useEffect(() => {
+        async function fetchCourses() {
+            const courseList = [
+                'module1.md', 'module2.md', 'module3.md', 'module4.md', 'module5.md',
+                'module6.md', 'module7.md', 'module8.md', 'module9.md', 'module10.md'
+            ];
+            const fetchedCourses = [];
+            for (const file of courseList) {
+                try {
+                    const stream = await ipfs.cat(`/ipfs/YOUR_IPFS_HASH/${file}`);
+                    let content = '';
+                    for await (const chunk of stream) {
+                        content += new TextDecoder().decode(chunk);
+                    }
+                    fetchedCourses.push({ title: file.replace('.md', ''), content });
+                } catch (error) {
+                    console.error(`Error fetching ${file}:`, error);
+                }
+            }
+            setCourses(fetchedCourses);
+        }
+        fetchCourses();
+
+        if (window.ethereum) {
+            window.ethereum.request({ method: 'eth_requestAccounts' }).then(accounts => {
+                setAccount(accounts[0]);
+            });
+        }
+    }, []);
+
+    const mintBadge = async (courseId) => {
+        if (account) {
+            try {
+                await contract.methods.mintBadge(account, courseId).send({ from: account });
+                alert('Badge minted!');
+            } catch (error) {
+                alert('Error minting badge: ' + error.message);
+            }
+        } else {
+            alert('Connect MetaMask first.');
+        }
+    };
+
+    return (
+        <div className="container mx-auto p-4 bg-gray-100">
+            <h1 className="text-3xl font-bold mb-4 text-blue-700">EduVerse - Learn Free</h1>
+            {account ? <p className="text-gray-600">Connected: {account.slice(0, 6)}...</p> : (
+                <button className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600" onClick={() => window.ethereum.request({ method: 'eth_requestAccounts' })}>
+                    Connect Wallet
+                </button>
+            )}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
+                {courses.map((course, index) => (
+                    <div key={index} className="border p-4 rounded shadow bg-white">
+                        <h2 className="text-xl font-semibold text-gray-800">{course.title}</h2>
+                        <p className="text-gray-600">{course.content.slice(0, 100)}...</p>
+                        <button className="bg-green-500 text-white px-4 py-2 mt-2 rounded hover:bg-green-600" onClick={() => mintBadge(index + 1)}>
+                            Complete & Mint Badge
+                        </button>
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+};
+
+ReactDOM.render(<App />, document.getElementById('root'));
+
+// File: serviceWorker.js
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/serviceWorker.js').then(reg => {
+            console.log('Service Worker registered', reg);
+        }).catch(err => {
+            console.error('Service Worker registration failed', err);
+        });
+        caches.open('edaverse-cache').then(cache => {
+            cache.addAll([
+                '/',
+                '/index.html',
+                '/App.js',
+                'https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js',
+                'https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js',
+                'https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css'
+            ]).catch(err => {
+                console.error('Cache add failed', err);
+            });
+        });
+    });
+}
+
+self.addEventListener('fetch', event => {
+    event.respondWith(
+        caches.match(event.request).then(response => {
+            return response || fetch(event.request);
+        })
+    );
+});
+
+// File: contract.sol
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
+
+import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import "@openzeppelin/contracts/utils/Counters.sol";
+
+contract EduVerseBadge is ERC721 {
+    using Counters for Counters.Counter;
+    Counters.Counter private _tokenIds;
+
+    constructor() ERC721("EduVerseBadge", "EVB") {}
+
+    function mintBadge(address recipient, uint256 courseId) public returns (uint256) {
+        _tokenIds.increment();
+        uint256 newItemId = _tokenIds.current();
+        _mint(recipient, newItemId);
+        return newItemId;
+    }
+}
+
+// File: manifest.json
+{
+    "name": "EduVerse",
+    "short_name": "EduVerse",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#ffffff",
+    "theme_color": "#000000",
+    "icons": [
+        {
+            "src": "/icon.png",
+            "sizes": "192x192",
+            "type": "image/png"
+        }
+    ]
+}
+
+// File: icon.png
+// Instructions: Create a 192x192 image in Canva (canva.com, free).
+// - Use a black background.
+// - Add the Empress Services crown logo or a blue "E" in a futuristic font (e.g., Orbitron).
+// - Download as PNG, name it "icon.png", and upload to GitHub.
+
+// File: README.md
+# EduVerse
+EduVerse: Free, decentralized education platform powered by AI and blockchain. Learn offline-capable courses (e.g., Python for Farmers), earn NFT badges on Ethereum. Built with React.js, IPFS, and Hugging Face. Join the learning revolution! #Web3 #EdTech
+
+## Setup Instructions
+1. Save Files: Copy each file (index.html, App.js, serviceWorker.js, contract.sol, manifest.json, icon.png, README.md) to your computer using Notepad or a text editor. Save with exact file names.
+2. Create Repository: Log in to github.com, click "New", name it "EduVerse" or "EduVerse_Codebase", select "Public", check "Add a README file", and create.
+3. Add Description: Click the gear icon next to "About", paste the description above, and save.
+4. Upload Files: Click "Add file" > "Upload files", drag-drop all files, and click "Commit changes".
+5. Enable GitHub Pages: Go to Settings > Pages, select "main" branch, click "Save". Check yourusername.github.io/EduVerse after 5-10 minutes.
+6. Deploy Smart Contract:
+   - Open remix.ethereum.org, create a new file "contract.sol", paste the contract code.
+   - Compile with Solidity version 0.8.0, select "Injected Provider - MetaMask" (Sepolia testnet), and click "Deploy".
+   - Copy the deployed contract address from Remix.
+   - Update App.js with the contract address (replace YOUR_CONTRACT_ADDRESS) and re-upload to GitHub.
+7. Setup IPFS:
+   - Install IPFS Desktop (ipfs.tech, free).
+   - Drag the course module folder (module1.md to module10.md, from separate artifact) into IPFS Desktop, copy the CID, update App.js (replace YOUR_IPFS_HASH), and re-upload.
+```
